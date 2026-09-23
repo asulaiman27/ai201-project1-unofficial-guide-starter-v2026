@@ -95,8 +95,8 @@ The bad: known damp problem on the ground floor; two rooms were taken offline in
 
 ## Sample Answer
 
-<!-- One complete question and answer, pasted as text, with the source line
-     visible. Milestone 4. -->
+<!-- Pending a real model answer: add your own key to .env, run the command
+     below, then paste the answer and source line here. -->
 
 **Question:**
 
@@ -140,18 +140,20 @@ started matching neighboring courses, dining halls, or administrative topics.
 
 ## How I Used AI
 
-<!-- Two specific moments. For each: what you asked for, what came back, and
-     what you changed about it.
+**1. Chunking:** I asked Codex to adapt the starter chunker to the short
+`campus_life` posts. It compared the starter's 88 single-post chunks with the
+documents and implemented paragraph grouping under a 400-character cap, with
+the post heading repeated on each chunk. I kept that approach after reviewing
+the five printed examples and the 100-chunk summary; paragraph boundaries
+kept the sample chunks readable without character overlap.
 
-     "I asked Claude to write the chunking function from my notes. It ignored
-     the overlap, so I added that myself" is the level of detail we're after.
-     "I used AI to help me code" is not.
-
-     Milestone 5. -->
-
-**1.**
-
-**2.**
+**2. Retrieval:** I asked Codex to compare five covered questions with the
+five out-of-corpus questions and inspect the ranked results. The covered
+questions scored 0.1857–0.2455 and the uncovered questions scored
+0.8246–0.9231. I used that gap to set the cutoff to 0.55, reduced `top-k` from
+5 to 2 after later results started matching neighboring topics, and kept the
+existing grounding instruction because it already requires source-only
+answers, filenames, and an honest refusal when the documents lack an answer.
 
 <!-- ── Stretch features ─────────────────────────────────────────────────────
      Doing one? Say so here BEFORE you start. A feature this README never

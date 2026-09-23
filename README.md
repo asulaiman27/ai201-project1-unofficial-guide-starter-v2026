@@ -95,18 +95,15 @@ The bad: known damp problem on the ground floor; two rooms were taken offline in
 
 ## Sample Answer
 
-<!-- Pending a real model answer: add your own key to .env, run the command
-     below, then paste the answer and source line here. -->
-
-**Question:**
+**Question:** How many hours per week does MATH 220 Linear Algebra take, and what is most of that time spent on?
 
 **Answer:**
 
 ```
+MATH 220 Linear Algebra takes 6 to 8 hours a week, and almost all of that time is spent on problem sets.
 ```
 
-<!-- Run `python app.py ask "..."` after adding your API key to `.env`, then
-     paste the complete answer here with its source line. -->
+**Sources:** `course_math_220_workload.txt`, `course_math_220.txt`
 
 **My relevance cutoff:** 0.55. The five covered questions had best distances
 from 0.1857 to 0.2455. The five out-of-corpus questions ranged from 0.8246 to

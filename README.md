@@ -1,6 +1,6 @@
 # The Unofficial Guide
 
-<!-- Replace this line with your name and which corpus you picked. -->
+Corpus: `campus_life`.
 
 > **This file is your submission.** Fill it in as you go — most sections get
 > written during the milestone that produces them, not at the end.
@@ -21,11 +21,13 @@
 
 ## What This Does
 
-<!-- Three or four sentences. Which corpus you picked, and the kinds of
-     questions your system answers. Write it for someone who has never seen
-     this repo.
-
-     Milestone 5. -->
+The Unofficial Guide answers factual questions using 88 short student-written
+posts about campus life, including courses, dining, housing, and university
+rules. It retrieves the two closest paragraph chunks and refuses a question
+when the best cosine distance is 0.55 or higher. For questions it accepts,
+Gemini writes a brief answer using the retrieved text and names its source file.
+The embedding model and vector store run locally; only answer generation uses
+an external service.
 
 ## Chunking Strategy
 

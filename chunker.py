@@ -23,6 +23,7 @@ your pipeline, not giving up.
 """
 
 from dataclasses import dataclass
+import re
 
 import config
 from ingest import Document
@@ -53,8 +54,10 @@ def fallback_split(
     Keep this function. Milestone 3's stop rule points back at it, and having
     something to compare your own strategy against is useful in unit 2.
     """
-    chunk_size = chunk_size or config.CHUNK_SIZE
-    overlap = overlap or config.CHUNK_OVERLAP
+    # Keep the original starter settings available for comparison even after
+    # the custom chunker's settings in config.py change.
+    chunk_size = 800 if chunk_size is None else chunk_size
+    overlap = 120 if overlap is None else overlap
 
     if overlap >= chunk_size:
         raise ValueError("overlap has to be smaller than chunk_size")
@@ -82,22 +85,111 @@ def fallback_split(
 
 def split_documents(documents: list[Document]) -> list[Chunk]:
     """
-    Split documents into chunks. ⚠️ REPLACE THE BODY OF THIS IN MILESTONE 3.
+    Split the short campus posts on paragraph boundaries, up to a 400-char cap.
 
-    Right now it just calls the fallback. That is the plain, generic behaviour
-    the brief is talking about.
-
-    When you write your own strategy, set `produced_by` to
-    "chunker.py::split_documents" so your README's Sample Chunks section names
-    the right function. `app.py chunks` prints that string for you.
-
-    Things worth thinking about before you write any code:
-      - Are your documents short posts or long guides?
-      - Is the useful information in one sentence, or spread over a paragraph?
-      - Would splitting on paragraph breaks keep more thoughts intact than
-        splitting on a character count?
+    A short first paragraph is treated as the post heading and repeated on each
+    chunk. Paragraphs are packed together while they fit; an unusually long
+    paragraph is split at sentence boundaries, with a word boundary as a last
+    resort. No characters overlap between chunks.
     """
-    return fallback_split(documents)
+    limit = config.CHUNK_SIZE
+    if limit < 1:
+        raise ValueError("chunk size has to be positive")
+
+    chunks: list[Chunk] = []
+    for doc in documents:
+        paragraphs = [
+            re.sub(r"\s+", " ", part).strip()
+            for part in re.split(r"\n\s*\n", doc.text)
+            if part.strip()
+        ]
+        if not paragraphs:
+            continue
+
+        first = paragraphs[0]
+        has_heading = (
+            len(paragraphs) > 1
+            and len(first) <= 100
+            and not first.endswith((".", "!", "?"))
+        )
+        heading = first if has_heading else ""
+        body_paragraphs = paragraphs[1:] if has_heading else paragraphs
+        body_limit = limit - len(heading) - 2 if heading else limit
+        if body_limit < 1:
+            heading = ""
+            body_limit = limit
+            body_paragraphs = paragraphs
+
+        def split_long_paragraph(paragraph: str) -> list[str]:
+            if len(paragraph) <= body_limit:
+                return [paragraph]
+            sentences = re.split(r"(?<=[.!?])\s+", paragraph)
+            pieces: list[str] = []
+            current = ""
+            for sentence in sentences:
+                # If a sentence itself is too long, retain whole words where
+                # possible and split only that sentence into smaller pieces.
+                words = [sentence[i:i + body_limit] for i in range(0, len(sentence), body_limit)] \
+                    if not re.search(r"\s", sentence) else sentence.split()
+                sentence_pieces: list[str] = []
+                word_piece = ""
+                for word in words:
+                    if len(word) > body_limit:
+                        if word_piece:
+                            sentence_pieces.append(word_piece)
+                            word_piece = ""
+                        sentence_pieces.extend(
+                            word[i:i + body_limit] for i in range(0, len(word), body_limit)
+                        )
+                    elif word_piece and len(word_piece) + 1 + len(word) > body_limit:
+                        sentence_pieces.append(word_piece)
+                        word_piece = word
+                    else:
+                        word_piece = f"{word_piece} {word}".strip()
+                if word_piece:
+                    sentence_pieces.append(word_piece)
+
+                for piece in sentence_pieces:
+                    candidate = f"{current} {piece}".strip()
+                    if current and len(candidate) > body_limit:
+                        pieces.append(current)
+                        current = piece
+                    else:
+                        current = candidate
+            if current:
+                pieces.append(current)
+            return pieces
+
+        body_pieces = [
+            piece
+            for paragraph in body_paragraphs
+            for piece in split_long_paragraph(paragraph)
+        ]
+
+        grouped: list[str] = []
+        current_parts: list[str] = []
+        for piece in body_pieces:
+            candidate = "\n\n".join(current_parts + [piece])
+            if current_parts and len(candidate) > body_limit:
+                grouped.append("\n\n".join(current_parts))
+                current_parts = [piece]
+            else:
+                current_parts.append(piece)
+        if current_parts:
+            grouped.append("\n\n".join(current_parts))
+
+        for index, body in enumerate(grouped):
+            text = f"{heading}\n\n{body}" if heading else body
+            chunks.append(
+                Chunk(
+                    text=text,
+                    source=doc.source,
+                    index=index,
+                    produced_by="chunker.py::split_documents",
+                )
+            )
+
+    return chunks
 
 
 def describe(chunks: list[Chunk]) -> str:

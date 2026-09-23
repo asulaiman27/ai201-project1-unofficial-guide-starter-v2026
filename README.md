@@ -103,7 +103,12 @@ The bad: known damp problem on the ground floor; two rooms were taken offline in
 ```
 ```
 
-**My relevance cutoff:**
+<!-- Run `python app.py ask "..."` after adding your API key to `.env`, then
+     paste the complete answer here with its source line. -->
+
+**My relevance cutoff:** 0.55. The five covered questions had best distances
+from 0.1857 to 0.2455. The five out-of-corpus questions ranged from 0.8246 to
+0.9231, leaving a wide gap; 0.55 sits between the groups.
 
 <!-- The number you set in config.py, and how you got there.
 
@@ -116,7 +121,20 @@ The bad: known damp problem on the ground floor; two rooms were taken offline in
 
 | Question | In corpus? | Best distance |
 |---|---|---|
-|  |  |  |
+| Add/drop deadlines and late-drop W | Yes | 0.2452 |
+| MATH 220 workload | Yes | 0.1857 |
+| Halden Hall wait and hours | Yes | 0.2321 |
+| Morrow House weekend noise | Yes | 0.2455 |
+| Housing lottery order and dates | Yes | 0.2099 |
+| Capital of Mongolia | No | 0.8246 |
+| Changing diesel engine oil | No | 0.9231 |
+| 1994 World Cup winner | No | 0.8859 |
+| Ibuprofen dosage | No | 0.8442 |
+| Rust for loop | No | 0.8907 |
+
+I set `top-k` to 2. The top two chunks contained the needed evidence for all
+five questions; the third through fifth results in the first three searches
+started matching neighboring courses, dining halls, or administrative topics.
 
 ## How I Used AI
 
